@@ -1,0 +1,9 @@
+<resources>
+    <color name="lumen_bg">#10131A</color>
+    <color name="lumen_panel">#1A1F2B</color>
+    <color name="lumen_key">#2A3140</color>
+    <color name="lumen_accent">#8B5CF6</color>
+    <color name="lumen_text">#F8FAFC</color>
+    <color name="lumen_muted">#A7B0C0</color>
+</resources>
+
