@@ -1,0 +1,13 @@
+[
+  {"word":"ball","partOfSpeech":"noun","meaning":"A round object used in games and sports.","example":"He kicked the ball across the field.","synonyms":["sphere","orb"]},
+  {"word":"build","partOfSpeech":"verb","meaning":"To make something by putting parts together.","example":"We will build the product one milestone at a time.","synonyms":["construct","create","develop"]},
+  {"word":"clarity","partOfSpeech":"noun","meaning":"The quality of being clear and easy to understand.","example":"Clarity makes communication stronger.","synonyms":["clearness","precision"]},
+  {"word":"focus","partOfSpeech":"noun","meaning":"Concentrated attention on a particular task.","example":"Keep your focus on the next milestone.","synonyms":["attention","concentration"]},
+  {"word":"growth","partOfSpeech":"noun","meaning":"The process of developing or increasing.","example":"Consistent practice produces growth.","synonyms":["development","progress"]},
+  {"word":"lumen","partOfSpeech":"noun","meaning":"A unit used to measure the amount of visible light.","example":"The lamp produces eight hundred lumens.","synonyms":["light output"]},
+  {"word":"mature","partOfSpeech":"adjective","meaning":"Showing sound judgment and developed character.","example":"He made a mature decision.","synonyms":["responsible","wise"]},
+  {"word":"purpose","partOfSpeech":"noun","meaning":"The reason for which something exists or is done.","example":"Work with purpose every day.","synonyms":["aim","intention","goal"]},
+  {"word":"rewrite","partOfSpeech":"verb","meaning":"To write something again in a different or improved way.","example":"Rewrite the sentence in a professional tone.","synonyms":["revise","rephrase"]},
+  {"word":"suggestion","partOfSpeech":"noun","meaning":"An idea offered for consideration.","example":"The keyboard displayed a useful suggestion.","synonyms":["proposal","recommendation"]}
+]
+
