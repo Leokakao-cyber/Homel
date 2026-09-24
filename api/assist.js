@@ -1,3 +1,4 @@
+
 import { json, bodyOf } from "../lib/http.js";
 import crypto from "node:crypto";
 import { validPayload } from "../lib/security.js";
@@ -14,7 +15,8 @@ export default async function handler(req, res) {
   let raw; try { raw = await bodyOf(req); } catch { return send(json(400, { error: "invalid_json" })); }
   const [input, error] = validPayload(raw); if (error) return send(json(400, { error }));
   let user;
-  try { user = await verifiedUser(req.headers?.authorization); } catch { return send(json(503, { error: "service_temporarily_unavailable" })); }
+  try { user = await verifiedUser(req.headers?.authorization); }
+  catch (cause) { console.error("leo_assist_auth_unavailable", cause instanceof Error ? cause.message : "unknown"); return send(json(503, { error: "service_temporarily_unavailable" })); }
   if (!user) return send(json(401, { error: "sign_in_required" }));
   const requestId = crypto.randomUUID();
   const monthlyBudget = Number(process.env.LEO_MONTHLY_BUDGET_USD);
@@ -30,17 +32,29 @@ export default async function handler(req, res) {
       p_estimated_usd: Number(process.env.LEO_ESTIMATED_ACTION_USD) || 0.002,
       p_is_search: isSearch,
     });
-  } catch { return send(json(503, { error: "service_temporarily_unavailable" })); }
+  } catch (cause) { console.error("leo_assist_metering_unavailable", cause instanceof Error ? cause.message : "unknown"); return send(json(503, { error: "service_temporarily_unavailable" })); }
   const outcome = Array.isArray(reservation) ? reservation[0] : reservation;
   if (!outcome?.allowed) return send(json(outcome?.reason === "daily_limit_reached" ? 429 : 503, { error: outcome?.reason || "service_temporarily_unavailable" }));
   try {
     const result = await transform(input);
     await adminRpc("lumen_reconcile_leo_action", { p_request_id: requestId, p_actual_usd: result.cost });
     return send(json(200, { text: result.text }));
-  } catch {
+  } catch (cause) {
+    console.error("leo_assist_provider_or_reconciliation_unavailable", cause instanceof Error ? cause.message : "unknown");
     try { await adminRpc("lumen_reconcile_leo_action", { p_request_id: requestId, p_actual_usd: 0 }); } catch {}
     return send(json(503, { error: "service_temporarily_unavailable" }));
   }
 }
 
 
+---health---
+import { json } from "../lib/http.js";
+export default function handler(req, res) {
+  const required = ["OPENAI_API_KEY", "OPENAI_MODEL", "SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SERVICE_ROLE_KEY", "LEO_MONTHLY_BUDGET_USD"];
+  const response = json(200, { status: required.every((name) => process.env[name]) ? "configured" : "setup_required" });
+  if (!res) return response;
+  for (const [name, value] of Object.entries(response.headers)) res.setHeader(name, value);
+  return res.status(response.statusCode).send(response.body);
+}
+
+
