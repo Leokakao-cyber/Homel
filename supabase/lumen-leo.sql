@@ -22,7 +22,10 @@ declare daily_count integer; month_cost numeric;
 begin
   if p_estimated_usd < 0 or p_monthly_budget_usd <= 0 then return query select false, 'service_temporarily_unavailable'; return; end if;
   select count(*) into daily_count from lumen_leo_usage where user_id = p_user_id and requested_at >= date_trunc('day', now()) and (not p_is_search or is_search);
-  if daily_count >= case when p_is_search then p_daily_search_limit else p_daily_action_limit end then return query select false, 'daily_limit_reached'; return; end if;
+  if daily_count >= (case when p_is_search then p_daily_search_limit else p_daily_action_limit end) then
+    return query select false, 'daily_limit_reached';
+    return;
+  end if;
   select coalesce(sum(coalesce(actual_usd, reserved_usd)), 0) into month_cost from lumen_leo_usage where requested_at >= date_trunc('month', now());
   if month_cost + p_estimated_usd > p_monthly_budget_usd then return query select false, 'monthly_budget_reached'; return; end if;
   insert into lumen_leo_usage(request_id,user_id,action,is_search,reserved_usd) values (p_request_id,p_user_id,p_action,p_is_search,p_estimated_usd);
@@ -37,5 +40,4 @@ revoke all on function public.lumen_reserve_leo_action(uuid,uuid,text,numeric,in
 revoke all on function public.lumen_reconcile_leo_action(uuid,numeric) from public, anon, authenticated;
 grant execute on function public.lumen_reserve_leo_action(uuid,uuid,text,numeric,integer,integer,numeric,boolean) to service_role;
 grant execute on function public.lumen_reconcile_leo_action(uuid,numeric) to service_role;
-
 
