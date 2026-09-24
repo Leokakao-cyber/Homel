@@ -4,7 +4,11 @@ import { validPayload } from "../lib/security.js";
 import { adminRpc, verifiedUser } from "../lib/supabase.js";
 import { transform } from "../lib/ai.js";
 export default async function handler(req, res) {
-  const send = (result) => res ? res.status(result.statusCode).set(result.headers).send(result.body) : result;
+  const send = (result) => {
+    if (!res) return result;
+    for (const [name, value] of Object.entries(result.headers)) res.setHeader(name, value);
+    return res.status(result.statusCode).send(result.body);
+  };
   if (req.method !== "POST") return send(json(405, { error: "method_not_allowed" }, { allow: "POST" }));
   if (process.env.LEO_CLOUD_ENABLED !== "true") return send(json(503, { error: "cloud_processing_unavailable" }));
   let raw; try { raw = await bodyOf(req); } catch { return send(json(400, { error: "invalid_json" })); }
