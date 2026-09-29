@@ -16,11 +16,12 @@ export default async function handler(req, res) {
   let user;
   try { user = await verifiedUser(req.headers?.authorization); }
   catch (cause) { console.error("leo_assist_auth_unavailable", cause instanceof Error ? cause.message : "unknown"); return send(json(503, { error: "service_temporarily_unavailable" })); }
-  if (!user) return send(json(401, { error: "sign_in_required" }));
+  if (!user) return send(json(401, { error: "sign_in_required" }, { "www-authenticate": "Bearer error=\"invalid_token\"" }));
   const requestId = crypto.randomUUID();
   const monthlyBudget = Number(process.env.LEO_MONTHLY_BUDGET_USD);
   if (!Number.isFinite(monthlyBudget) || monthlyBudget <= 0) return send(json(503, { error: "service_temporarily_unavailable" }));
   const isSearch = input.action === "search";
+  const estimatedCost = Number(process.env.LEO_ESTIMATED_ACTION_USD) || 0.002;
   let reservation;
   try {
     reservation = await adminRpc("lumen_reserve_leo_action", {
@@ -28,7 +29,7 @@ export default async function handler(req, res) {
       p_monthly_budget_usd: monthlyBudget,
       p_daily_action_limit: Number(process.env.LEO_DAILY_ACTION_LIMIT) || 20,
       p_daily_search_limit: Number(process.env.LEO_DAILY_SEARCH_LIMIT) || 3,
-      p_estimated_usd: Number(process.env.LEO_ESTIMATED_ACTION_USD) || 0.002,
+      p_estimated_usd: estimatedCost,
       p_is_search: isSearch,
     });
   } catch (cause) { console.error("leo_assist_metering_unavailable", cause instanceof Error ? cause.message : "unknown"); return send(json(503, { error: "service_temporarily_unavailable" })); }
@@ -36,7 +37,7 @@ export default async function handler(req, res) {
   if (!outcome?.allowed) return send(json(outcome?.reason === "daily_limit_reached" ? 429 : 503, { error: outcome?.reason || "service_temporarily_unavailable" }));
   try {
     const result = await transform(input);
-    await adminRpc("lumen_reconcile_leo_action", { p_request_id: requestId, p_actual_usd: result.cost });
+    await adminRpc("lumen_reconcile_leo_action", { p_request_id: requestId, p_actual_usd: Math.max(result.cost, estimatedCost) });
     return send(json(200, { text: result.text }));
   } catch (cause) {
     console.error("leo_assist_provider_or_reconciliation_unavailable", cause instanceof Error ? cause.message : "unknown");
@@ -44,5 +45,4 @@ export default async function handler(req, res) {
     return send(json(503, { error: "service_temporarily_unavailable" }));
   }
 }
-
 
