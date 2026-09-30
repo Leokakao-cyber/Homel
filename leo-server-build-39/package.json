@@ -1,0 +1,9 @@
+{
+  "name": "lumen-keyboard-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check api/assist.js && node --check api/health.js && node --check api/learning.js && node --check public/js/app.js && node --check public/js/auth.js && node --check public/js/config.js && node --check public/js/lumen.js"
+  }
+}
